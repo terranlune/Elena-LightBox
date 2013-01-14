@@ -1,0 +1,236 @@
+<html>
+<head>
+
+<style>
+
+body {
+    background: #333333;
+}
+
+td {
+    width: 4px;
+    height: 4px;
+    font-size: 1px;
+}
+
+td.red {
+    background: #ff0000;
+    border-right: 1px solid #333333;
+    border-bottom: 1px solid #333333;
+    margin-right: 10px;
+}
+td.green {
+    background: #00ff00;
+    border-left: 1px solid #333333;
+    border-bottom: 1px solid #333333;
+}
+td.blue {
+    background: #0000ff;
+    border-right: 1px solid #333333;
+    border-top: 1px solid #333333;
+}
+td.white {
+    background: #ffffff;
+    border-left: 1px solid #333333;
+    border-top: 1px solid #333333;
+}
+
+</style>
+
+</head>
+
+<body>
+
+
+<table id="myTable" border="0" cellspacing=0 cellpadding=0 background=#333333 align=center >
+</table>
+<br />
+<div align="center">
+<input type="button" onclick="randomizeColor()" value="Randomize Base Color">
+<input type="button" onclick="randomizeColors()" value="Randomize Colors">
+</div>
+
+<script type="text/javascript">
+
+gridSize = 25;
+minValue = 0;
+maxValue = 7;
+
+blocks = new Array(gridSize);
+
+
+function setupTable()
+{
+
+var myTable=document.getElementById('myTable')
+
+for (var i=0; i<gridSize; i++) {
+blocks[i] = new Array(gridSize);
+var topRow = myTable.insertRow(0);
+var botRow = myTable.insertRow(0);
+for (var j=0; j<gridSize; j++) {
+    blocks[i][j] = new Array(4);
+
+    var rCell=topRow.insertCell(0);
+    var gCell=topRow.insertCell(0);
+    var bCell=botRow.insertCell(0);
+    var wCell=botRow.insertCell(0);
+
+    rCell.setAttribute("id", "block_" + i + "_" + j + "_r");
+    gCell.setAttribute("id", "block_" + i + "_" + j + "_g");
+    bCell.setAttribute("id", "block_" + i + "_" + j + "_b");
+    wCell.setAttribute("id", "block_" + i + "_" + j + "_w");
+
+    rCell.setAttribute("class", "red");
+    gCell.setAttribute("class", "green");
+    bCell.setAttribute("class", "blue");
+    wCell.setAttribute("class", "white");
+
+    rCell.innerHTML = "&nbsp;";
+    gCell.innerHTML = "&nbsp;";
+    bCell.innerHTML = "&nbsp;";
+    wCell.innerHTML = "&nbsp;";
+
+    blocks[i][j]["r"] = new Array(2);
+    blocks[i][j]["g"] = new Array(2);
+    blocks[i][j]["b"] = new Array(2);
+    blocks[i][j]["w"] = new Array(2);
+
+    blocks[i][j]["r"]["cell"] = rCell;
+    blocks[i][j]["r"]["value"] = maxValue;
+    blocks[i][j]["g"]["cell"] = gCell;
+    blocks[i][j]["g"]["value"] = maxValue;
+    blocks[i][j]["b"]["cell"] = bCell;
+    blocks[i][j]["b"]["value"] = maxValue;
+    blocks[i][j]["w"]["cell"] = wCell;
+    blocks[i][j]["w"]["value"] = maxValue;
+
+}
+}
+
+}
+
+function randomizeColor()
+{
+
+rValue = minValue + Math.floor(Math.random()*(maxValue+1));
+gValue = minValue + Math.floor(Math.random()*(maxValue+1));
+bValue = minValue + Math.floor(Math.random()*(maxValue+1));
+wValue = minValue + Math.floor(Math.random()*(maxValue+1));
+
+rColor = rgbToHex(rValue, 0, 0);
+gColor = rgbToHex(0, gValue, 0);
+bColor = rgbToHex(0, 0, bValue);
+wColor = rgbToHex(wValue, wValue, wValue);
+
+for (var i=0; i<gridSize; i++) {
+for (var j=0; j<gridSize; j++) {
+
+    rCell = blocks[i][j]["r"]["cell"];
+    gCell = blocks[i][j]["g"]["cell"];
+    bCell = blocks[i][j]["b"]["cell"];
+    wCell = blocks[i][j]["w"]["cell"];
+
+    blocks[i][j]["r"]["value"] = rValue;
+    blocks[i][j]["g"]["value"] = gValue;
+    blocks[i][j]["b"]["value"] = bValue;
+    blocks[i][j]["w"]["value"] = wValue;
+
+    rCell.style.background = rColor;
+    gCell.style.background = gColor;
+    bCell.style.background = bColor;
+    wCell.style.background = wColor;
+}}
+
+}
+
+function randomizeColors()
+{
+
+for (var i=0; i<gridSize; i++) {
+for (var j=0; j<gridSize; j++) {
+
+    whichColorToRandomize = Math.floor(Math.random()*4);
+
+    if(whichColorToRandomize == 0) {
+
+    rValue = randomValue(blocks[i][j]["r"]["value"]);
+    rColor = rgbToHex(rValue, 0, 0);
+    rCell = blocks[i][j]["r"]["cell"];
+    blocks[i][j]["r"]["value"] = rValue;
+    rCell.style.background = rColor;
+
+    }else if (whichColorToRandomize == 1) {
+
+    gValue = randomValue(blocks[i][j]["g"]["value"]);
+    gColor = rgbToHex(0, gValue, 0);
+    gCell = blocks[i][j]["g"]["cell"];
+    blocks[i][j]["g"]["value"] = gValue;
+    gCell.style.background = gColor;
+
+    }else if (whichColorToRandomize == 2) {
+
+    bValue = randomValue(blocks[i][j]["b"]["value"]);
+    bColor = rgbToHex(0, 0, bValue);
+    bCell = blocks[i][j]["b"]["cell"];
+    blocks[i][j]["b"]["value"] = bValue;
+    bCell.style.background = bColor;
+
+    }else if (whichColorToRandomize == 3) {
+
+    wValue = randomValue(blocks[i][j]["w"]["value"]);
+    wColor = rgbToHex(wValue, wValue, wValue);
+    wCell = blocks[i][j]["w"]["cell"];
+    blocks[i][j]["w"]["value"] = wValue;
+    wCell.style.background = wColor;
+
+    }
+}}
+
+}
+
+function randomValue(value)
+{
+    var adjustment = 0;
+    if (value <= minValue) {
+        adjustment = Math.floor(Math.random()*2);
+    } else if (value >= maxValue) {
+        adjustment = Math.floor(Math.random()*2) - 1;
+    } else {
+        adjustment = Math.floor(Math.random()*3) - 1;
+    }
+
+    return value + adjustment;
+}
+
+function rgbToHex(rIndex, gIndex, bIndex)
+{
+    // Input is indexed minValue-maxValue, so normalize to 0-255
+    var r = Math.round((rIndex - minValue) / maxValue * 255);
+    var g = Math.round((gIndex - minValue) / maxValue * 255);
+    var b = Math.round((bIndex - minValue) / maxValue * 255);
+
+    r = r.toString(16);
+    g = g.toString(16);
+    b = b.toString(16);
+
+    r = r.length == 1 ? "0" + r : r;
+    g = g.length == 1 ? "0" + g : g;
+    b = b.length == 1 ? "0" + b : b;
+
+    var output = "#" + r + g + b;
+
+    //alert("Input: " + rIndex + "," + gIndex + "," + bIndex + "   Output: " + output);
+
+    return output;
+
+}
+
+
+document.onLoad = setupTable();
+
+</script>
+
+</body>
+</html>
+

@@ -1,0 +1,236 @@
+<!DOCTYPE html >
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>color test 2</title>
+    <!--[if IE]><script type="text/javascript" src="excanvas.js"></script><![endif]-->
+    <script type="text/javascript">
+
+        var fps = 10;
+        var cpf = 0; // Chroma to advance the base color per frame
+
+        // During a cycle, what is the maximum amount of variation?
+        var maxHVariation = 10;
+        var maxSVariation = 0.05;
+        var maxVVariation = 0.15;
+
+        // How many cycles per second?
+        var maxHSpeed = 0.03;
+        var maxSSpeed = 0.03;
+        var maxVSpeed = 0.03;
+
+        var boxes = [];
+        var curTime = 0;
+
+        var baseSaturation = 0.6;
+        var baseColor = new HSVColor(0, baseSaturation, 0.9);
+
+        function debug(text) {
+
+            debugEl = document.getElementById("debug");
+            debugEl.innerHTML = text;
+
+        }
+
+        function HSVColor(h, s, v) {
+
+            this.h = h // hue is 0-360
+            this.s = s // saturation is 0-1
+            this.v = v // value is 0-1
+
+            this.clamp = function() {
+
+                if(this.h < 0 || this.h >= 360) {
+                    this.h = this.h % 360;
+                }
+
+                if(this.s < 0) { this.s = 0.0; }
+                if(this.s > 1) { this.s = 1.0; }
+
+                if(this.v < 0) { this.v = 0.0; }
+                if(this.v > 1) { this.v = 1.0; }
+
+            }
+
+            this.clamp();
+
+            this.toRGB = function() {
+
+                this.clamp();
+
+                var hi = Math.floor((this.h/60) % 6);  
+                var f = (this.h / 60) - hi;  
+                var p = v * (1 - s);  
+                var q = v * (1 - f * s);  
+                var t = v * (1 - (1 - f) * s);  
+   
+                var rgb = [];  
+   
+                switch (hi) {  
+                    case 0: rgb = [v,t,p];break;  
+                    case 1: rgb = [q,v,p];break;  
+                    case 2: rgb = [p,v,t];break;  
+                    case 3: rgb = [p,q,v];break;  
+                    case 4: rgb = [t,p,v];break;  
+                    case 5: rgb = [v,p,q];break;  
+                }  
+   
+                var r = Math.min(255, Math.round(rgb[0]*256)),  
+                    g = Math.min(255, Math.round(rgb[1]*256)),  
+                    b = Math.min(255, Math.round(rgb[2]*256));  
+   
+                return [r,g,b];  
+
+            }
+
+        }
+
+        function Box(canvas, x, y, width, height, color) {
+
+            this.canvas = canvas;
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+            this.baseColor = color;
+            this.hSpeed = Math.random() * maxHSpeed;
+            this.hVariation = Math.random() * maxHVariation;
+            this.sSpeed = Math.random() * maxSSpeed;
+            this.sVariation = Math.random() * maxSVariation;
+            this.vSpeed = Math.random() * maxVSpeed;
+            this.vVariation = Math.random() * maxVVariation;
+
+            this.draw = function(curTime) {
+
+                var rgb = this.getNextColor(curTime);
+
+                this.canvas.fillStyle = "rgb("+rgb[0]+","+rgb[1]+","+rgb[2]+")";
+                this.canvas.fillRect(this.x, this.y, this.width, this.height); 
+            }
+
+            this.getNextColor = function(curTime) {
+
+                var h = Math.floor(this.baseColor.h + Math.sin(curTime * this.hSpeed / fps) * this.hVariation);
+                var s = this.baseColor.s + Math.sin(curTime * this.sSpeed / fps) * this.sVariation;
+                var v = this.baseColor.v + Math.sin(curTime * this.vSpeed / fps) * this.vVariation;
+
+                var color = new HSVColor(h, s, v);
+                return color.toRGB();
+            }
+
+        }
+
+        function drawBoxes() {
+
+            // Adjust the base color
+            baseColor.h = (baseColor.h + cpf);
+            baseColor.s = baseSaturation + Math.sin(curTime * maxSSpeed/4) * 0.1;
+            baseColor.clamp();
+            //debug(baseColor.toRGB());
+
+            for (var i = boxes.length - 1; i >= 0; i--) {
+                var box = boxes[i];
+                box.draw(curTime);
+            }
+            curTime++;
+        }
+        
+        function resetColors() {
+            baseColor.h = Math.floor(Math.random() * 360);
+            baseSaturation = 0.6 + Math.random() * 0.2;
+            baseColor.s = baseSaturation;
+        }
+
+        function updateBaseValue() {
+
+            brightness = document.getElementById("brightness");
+
+            baseColor.v = parseInt(brightness.value) * 1.0 / 100.0;
+            baseColor.clamp();
+        }
+
+        function updateCPF() { // Chroma per frame
+
+            cycle_duration = document.getElementById("cycle_duration");
+            cpf = 360.0 / parseInt(cycle_duration.value) / fps;
+        }
+
+        function setup() {
+ 
+            notepad = document.getElementById("notepad2");
+            paper2 = notepad.getContext("2d");
+
+            paper2.fillStyle = "rgb(0,0,0)";
+            paper2.fillRect(0,0,notepad.width,notepad.height);
+
+
+            // Fill the paper with boxes
+            var size = 50;
+            for (var i = 0; i < 14; i++) {
+            for (var j = 0; j < 11; j++) {
+
+                box = new Box(paper2, i*size, j*size, size, size, baseColor);
+                boxes.push(box);
+
+            }}
+
+            // On click, randomize the base color
+            notepad.onclick = resetColors;
+
+            // And for good measure, randomize the color now
+            resetColors();
+ 
+            // Setup the UI
+            brightness = document.getElementById("brightness");
+            brightness.onchange = updateBaseValue;
+            updateBaseValue();
+
+            cycle_duration = document.getElementById("cycle_duration");
+            cycle_duration.onchange = updateCPF;
+            updateCPF();
+
+            // And launch the timers
+            setInterval(drawBoxes, 1000 / fps);
+
+        }
+
+
+    </script>
+    <style>
+      body {
+          background: black;
+      }
+      div {
+          color: grey;
+      }
+      input {
+          color: grey;
+          background: black;
+          border: 1px solid #333333;
+      }
+
+    </style>
+
+  </head>
+  <body onload="setup()">
+
+    <center>
+
+    <canvas id="notepad2" width="700" height="550"></canvas>
+
+    <div>
+
+    Color cycle duration: <input type="text" id="cycle_duration" style="width: 40px;" value="300"> seconds
+
+    &nbsp;&nbsp;&nbsp;
+
+    Brightness: <input type="text" id="brightness" style="width: 25px;" value="90">%
+
+    </div>
+
+    <div style="color: white;" id="debug" />
+
+    <!--<br><input type="text" id="debug">-->
+
+    </center>
+  </body>
+</html>
